@@ -25,6 +25,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils"
 
 // This is sample data.
 const data = {
@@ -152,20 +153,29 @@ const data = {
   ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ className, ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+    <Sidebar 
+      collapsible="icon" 
+      className={cn(
+        "bg-gradient-to-b from-background/80 to-background border-r border-border/40 backdrop-blur-xl",
+        className
+      )}
+      {...props}
+    >
+      <SidebarHeader className="border-b border-border/40 bg-background/50">
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
-      <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+      <SidebarContent className="px-4 py-4">
+        <div className="space-y-6">
+          <NavMain items={data.navMain} />
+          <NavProjects projects={data.projects} />
+        </div>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-border/40 bg-background/50 p-4">
         <NavUser user={data.user} />
       </SidebarFooter>
-      <SidebarRail />
+      <SidebarRail className="bg-border/40" />
     </Sidebar>
   )
 }

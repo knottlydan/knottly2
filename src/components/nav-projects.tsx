@@ -4,6 +4,7 @@ import {
   Folder,
   Forward,
   MoreHorizontal,
+  Plus,
   Trash2,
   type LucideIcon,
 } from "lucide-react"
@@ -24,6 +25,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 
 export function NavProjects({
   projects,
@@ -38,51 +41,65 @@ export function NavProjects({
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Projects</SidebarGroupLabel>
+      <div className="flex items-center justify-between mb-2">
+        <SidebarGroupLabel className="text-xs font-medium text-muted-foreground/70">
+          Projects
+        </SidebarGroupLabel>
+        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-lg">
+          <Plus className="h-4 w-4" />
+          <span className="sr-only">Add Project</span>
+        </Button>
+      </div>
       <SidebarMenu>
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton 
+              asChild
+              className={cn(
+                "group relative flex w-full items-center rounded-xl px-4 py-2.5",
+                "hover:bg-accent/50 hover:text-accent-foreground",
+                "focus-visible:bg-accent focus-visible:text-accent-foreground",
+                "transition-colors duration-200"
+              )}
+            >
               <a href={item.url}>
-                <item.icon />
-                <span>{item.name}</span>
+                <item.icon className="mr-3 h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+                <span className="flex-1 truncate">{item.name}</span>
               </a>
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuAction showOnHover>
-                  <MoreHorizontal />
+                <SidebarMenuAction 
+                  showOnHover
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-48 rounded-lg"
+                className="w-48 rounded-xl"
                 side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}
+                sideOffset={8}
               >
-                <DropdownMenuItem>
-                  <Folder className="text-muted-foreground" />
+                <DropdownMenuItem className="gap-2">
+                  <Folder className="h-4 w-4 text-muted-foreground" />
                   <span>View Project</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Forward className="text-muted-foreground" />
+                <DropdownMenuItem className="gap-2">
+                  <Forward className="h-4 w-4 text-muted-foreground" />
                   <span>Share Project</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Trash2 className="text-muted-foreground" />
+                <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive">
+                  <Trash2 className="h-4 w-4" />
                   <span>Delete Project</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
         ))}
-        <SidebarMenuItem>
-          <SidebarMenuButton className="text-sidebar-foreground/70">
-            <MoreHorizontal className="text-sidebar-foreground/70" />
-            <span>More</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>
   )
