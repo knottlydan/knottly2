@@ -8,7 +8,6 @@ import {
 } from "drizzle-orm/pg-core";
 
 import type { AdapterAccountType } from "next-auth/adapters";
-import { plans } from "./plans";
 
 export const users = pgTable("app_user", {
   id: text("id")
@@ -19,12 +18,6 @@ export const users = pgTable("app_user", {
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
-
-  stripeCustomerId: text("stripeCustomerId"),
-  stripeSubscriptionId: text("stripeSubscriptionId"),
-  lemonSqueezyCustomerId: text("lemonSqueezyCustomerId"),
-  lemonSqueezySubscriptionId: text("lemonSqueezySubscriptionId"),
-  planId: text("planId").references(() => plans.id),
 });
 
 export const accounts = pgTable(
