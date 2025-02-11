@@ -165,6 +165,25 @@ function OrganizationSwitcher({ className, isCollapsed }: { className?: string, 
 }
 
 function SidebarContent({ className, isCollapsed }: { className?: string; isCollapsed?: boolean }) {
+  const { user } = useUser();
+
+  const getInitials = (name?: string | null, email?: string | null) => {
+    if (name) {
+      return name
+        .split(" ")
+        .map(word => word[0])
+        .join("")
+        .toUpperCase();
+    }
+    if (email) {
+      return email
+        .split("@")[0]
+        .slice(0, 2)
+        .toUpperCase();
+    }
+    return "U";
+  };
+
   return (
     <div className={cn("flex flex-col h-full", className)}>
       {/* Organization Switcher */}
@@ -266,11 +285,32 @@ function SidebarContent({ className, isCollapsed }: { className?: string; isColl
                 isCollapsed && "justify-center px-2"
               )}
             >
-              <User className="h-5 w-5 text-inherit" />
+              <Avatar className="h-5 w-5 rounded-full">
+                <AvatarImage src={user?.image || undefined} alt="" />
+                <AvatarFallback className="text-xs">
+                  {getInitials(user?.name, user?.email)}
+                </AvatarFallback>
+              </Avatar>
               {!isCollapsed && "Account"}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-56">
+            <div className="flex items-center gap-3 p-2 pb-3">
+              <Avatar className="h-9 w-9 rounded-full">
+                <AvatarImage src={user?.image || undefined} alt="" />
+                <AvatarFallback>
+                  {getInitials(user?.name, user?.email)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium leading-none">
+                  {user?.name || 'Anonymous'}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {user?.email}
+                </span>
+              </div>
+            </div>
             <DropdownMenuItem asChild>
               <Link href="/app/account" className="flex items-center font-medium">
                 <User className="h-4 w-4 mr-2 text-inherit" />

@@ -5,6 +5,7 @@ export const SESSION_KEY = "gloow-session";
 
 export interface SessionValue {
   initialRef?: string;
+  currentOrganization?: string;
 }
 
 export const getSession = async () => {
