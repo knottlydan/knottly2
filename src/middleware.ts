@@ -32,10 +32,18 @@ export async function middleware(req: NextRequest) {
     );
   }
 
+  if (req.nextUrl.pathname.startsWith("/app")) {
+    if (!session?.user) {
+      return NextResponse.redirect(
+        new URL("/sign-in?error=unauthorized", req.url)
+      );
+    }
+    return NextResponse.next();
+  }
+
   if (req.nextUrl.pathname.startsWith("/super-admin")) {
-    const adminEmails = process.env.SUPER_ADMIN_EMAILS?.split(",");
-    const currentUserEmail = session?.user?.email;
-    if (!currentUserEmail || !adminEmails?.includes(currentUserEmail)) {
+    // TODO: Check if user is super admin (by checking email using token via http call)
+    if (!session?.user) {
       return NextResponse.redirect(
         new URL("/sign-in?error=unauthorized", req.url)
       );

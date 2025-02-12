@@ -1,18 +1,11 @@
 import { auth } from "@/auth";
-import { Session } from "next-auth";
+import { db } from "@/db";
+import { eq } from "drizzle-orm";
+import { users } from "@/db/schema/user";
 import { NextRequest, NextResponse } from "next/server";
+import { WithAuthHandler } from "./withAuthRequired";
 
-interface WithManagerHandler {
-  (
-    req: NextRequest,
-    context: {
-      session: NonNullable<Session>;
-      params: Promise<Record<string, unknown>>;
-    }
-  ): Promise<NextResponse | Response>;
-}
-
-const withSuperAdminAuthRequired = (handler: WithManagerHandler) => {
+const withSuperAdminAuthRequired = (handler: WithAuthHandler) => {
   return async (
     req: NextRequest,
     context: {
@@ -21,7 +14,7 @@ const withSuperAdminAuthRequired = (handler: WithManagerHandler) => {
   ) => {
     const session = await auth();
 
-    if (!session || !session.user || !session.user.id || !session.user.email) {
+    if (!session || !session.user || !session.user.id) {
       return NextResponse.json(
         {
           error: "Unauthorized",
@@ -35,19 +28,23 @@ const withSuperAdminAuthRequired = (handler: WithManagerHandler) => {
       return NextResponse.json(
         {
           error: "Unauthorized",
-          message: "No super admins found",
+          message: "No super admins configured",
         },
         { status: 403 }
       );
     }
 
-    if (
-      !process.env.SUPER_ADMIN_EMAILS?.split(",").includes(session.user?.email)
-    ) {
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .then((users) => users[0]);
+
+    if (!process.env.SUPER_ADMIN_EMAILS?.split(",").includes(user?.email)) {
       return NextResponse.json(
         {
           error: "Unauthorized",
-          message: "Only managers can access this resource",
+          message: "Only super admins can access this resource",
         },
         { status: 403 }
       );
@@ -55,7 +52,13 @@ const withSuperAdminAuthRequired = (handler: WithManagerHandler) => {
 
     return await handler(req, {
       ...context,
-      session: session,
+      session: {
+        ...session,
+        user: {
+          ...session.user,
+          ...user,
+        },
+      },
     });
   };
 };

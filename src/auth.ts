@@ -15,6 +15,16 @@ import MagicLinkEmail from "./emails/MagicLinkEmail";
 import sendMail from "./lib/email/sendMail";
 import { appConfig } from "./lib/config";
 
+// Overrides default session type
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+    };
+    expires: string;
+  }
+}
+
 const emailProvider: EmailConfig = {
   id: "email",
   type: "email",
@@ -74,6 +84,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.sub;
       }
       return session;
+    },
+    async jwt({ token }) {
+      // NOTE: Do not add anything else to the token, except for the sub
+      // This avoids stale data problems, while increasing db roundtrips
+      // which is acceptable while starting small.
+      return {
+        sub: token.sub,
+        iat: token.iat,
+        exp: token.exp,
+        jti: token.jti,
+      };
     },
   },
   providers: [

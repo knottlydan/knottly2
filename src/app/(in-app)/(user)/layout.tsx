@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { InAppFooter } from "@/components/layout/in-app-footer";
 
 function UserLayout({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
@@ -36,70 +37,74 @@ function UserLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border/40 bg-background">
-        <div className="flex items-center justify-between px-6 h-16">
-          <div className="flex items-center gap-6">
-            <h1 className="text-xl font-semibold">
-              {appConfig.projectName}
-            </h1>
-          </div>
+        <div className="container max-w-7xl mx-auto">
+          <div className="flex items-center justify-between h-16">
+            <Link href="/" className="flex items-center gap-6">
+              <h1 className="text-xl font-semibold">
+                {appConfig.projectName}
+              </h1>
+            </Link>
 
-          {/* Account Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="gap-2 px-2 py-1.5"
-              >
-                <Avatar className="h-8 w-8 rounded-full">
-                  <AvatarImage src={user?.image || undefined} alt="" />
-                  <AvatarFallback>
-                    {getInitials(user?.name, user?.email)}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <div className="flex items-center gap-3 p-2 pb-3">
-                <Avatar className="h-9 w-9 rounded-full">
-                  <AvatarImage src={user?.image || undefined} alt="" />
-                  <AvatarFallback>
-                    {getInitials(user?.name, user?.email)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium leading-none">
-                    {user?.name || 'Anonymous'}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {user?.email}
-                  </span>
+            {/* Account Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="gap-2 px-2 py-1.5"
+                >
+                  <Avatar className="h-8 w-8 rounded-full">
+                    <AvatarImage src={user?.image || undefined} alt="" />
+                    <AvatarFallback>
+                      {getInitials(user?.name, user?.email)}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="flex items-center gap-3 p-2 pb-3">
+                  <Avatar className="h-9 w-9 rounded-full">
+                    <AvatarImage src={user?.image || undefined} alt="" />
+                    <AvatarFallback>
+                      {getInitials(user?.name, user?.email)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium leading-none">
+                      {user?.name || 'Anonymous'}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {user?.email}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <DropdownMenuItem asChild>
-                <Link href="/app/account" className="flex items-center font-medium">
-                  <User className="h-4 w-4 mr-2 text-inherit" />
-                  Account Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => signOut()}
-                className="flex items-center text-destructive focus:text-destructive font-medium"
-              >
-                <LogOut className="h-4 w-4 mr-2 text-inherit" />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem asChild>
+                  <Link href="/app/account" className="flex items-center font-medium">
+                    <User className="h-4 w-4 mr-2 text-inherit" />
+                    Account Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => signOut()}
+                  className="flex items-center text-destructive focus:text-destructive font-medium"
+                >
+                  <LogOut className="h-4 w-4 mr-2 text-inherit" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="p-6">
+      <main className="container max-w-7xl mx-auto py-6 px-4 flex-1">
         {children}
       </main>
+
+      <InAppFooter />
     </div>
   );
 }

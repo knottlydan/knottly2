@@ -33,6 +33,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { InAppFooter } from "@/components/layout/in-app-footer";
 
 function NavItem({
   href,
@@ -406,6 +407,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
               {children}
             </div>
           </div>
+          <InAppFooter />
         </div>
       </div>
     </TooltipProvider>

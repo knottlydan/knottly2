@@ -4,10 +4,9 @@ import { db } from "@/db";
 import { users } from "@/db/schema/user";
 import { Session } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { plans } from "@/db/schema/plans";
 import { MeResponse } from "@/app/api/app/me/types";
 
-interface WithManagerHandler {
+export interface WithAuthHandler {
   (
     req: NextRequest,
     context: {
@@ -16,13 +15,12 @@ interface WithManagerHandler {
           user: MeResponse["user"];
         }
       >;
-      getCurrentPlan: () => Promise<MeResponse["currentPlan"]>;
       params: Promise<Record<string, unknown>>;
     }
   ): Promise<NextResponse | Response>;
 }
 
-const withAuthRequired = (handler: WithManagerHandler) => {
+const withAuthRequired = (handler: WithAuthHandler) => {
   return async (
     req: NextRequest,
     context: {
@@ -31,7 +29,7 @@ const withAuthRequired = (handler: WithManagerHandler) => {
   ) => {
     const session = await auth();
 
-    if (!session || !session.user || !session.user.id || !session.user.email) {
+    if (!session || !session.user?.id) {
       return NextResponse.json(
         {
           error: "Unauthorized",
@@ -41,45 +39,30 @@ const withAuthRequired = (handler: WithManagerHandler) => {
       );
     }
 
-    const userId = session.user.id;
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .then((users) => users[0]);
 
-    const getCurrentPlan = async () => {
-      const user = await db.select().from(users).where(eq(users.id, userId));
-
-      if (!user) {
-        return null;
-      }
-
-      // Get the current plan and quotas
-
-      if (!user[0].planId) {
-        return null;
-      }
-
-      const currentPlan = await db
-        .select({
-          id: plans.id,
-          name: plans.name,
-          codename: plans.codename,
-          quotas: plans.quotas,
-          default: plans.default,
-        })
-        .from(plans)
-        .where(eq(plans.id, user[0].planId));
-
-      if (!currentPlan.length) {
-        return null;
-      }
-
-      return currentPlan[0];
-    };
-
+    if (!user) {
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+          message: "You are not authorized to perform this action",
+        },
+        { status: 401 }
+      );
+    }
     return await handler(req, {
       ...context,
-      // @ts-expect-error - session is typed correctly, but user is not
-      // althogh it is checked above
-      session: session,
-      getCurrentPlan,
+      session: {
+        ...session,
+        user: {
+          ...session.user,
+          ...user,
+        },
+      },
     });
   };
 };
