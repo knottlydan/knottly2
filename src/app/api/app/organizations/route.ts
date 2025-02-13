@@ -11,6 +11,7 @@ const createOrganizationSchema = z.object({
   name: z.string().min(2, "Organization name must be at least 2 characters"),
 });
 
+// Create an organization
 export const POST = withAuthRequired(async (req, context) => {
   try {
     const { session } = context;
@@ -62,12 +63,7 @@ export const POST = withAuthRequired(async (req, context) => {
   }
 });
 
-export const PUT = withAuthRequired(async (req, context) => {
-  // Update an organization
-  // Name
-  // Image
-});
-
+// Get my organizations
 export const GET = withAuthRequired(async (req, context) => {
   const user = context.session.user;
 

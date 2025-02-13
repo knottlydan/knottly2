@@ -1,3 +1,0 @@
-// Update
-// Delete
-// Get

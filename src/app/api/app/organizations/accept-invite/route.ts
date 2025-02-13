@@ -1,0 +1,1 @@
+// Accept an invite (no need to be authorized by any organization)
