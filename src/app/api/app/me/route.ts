@@ -14,7 +14,7 @@ export const GET = withAuthRequired(async (req, context) => {
   const { session } = context;
 
   return NextResponse.json<MeResponse>({
-    user: session.user,
+    user: await session.user,
   });
 });
 
