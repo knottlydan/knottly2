@@ -13,8 +13,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
+import useOrganization from "@/lib/organizations/useOrganization";
 
 const createOrganizationSchema = z.object({
   name: z.string().min(2, "Organization name must be at least 2 characters"),
@@ -23,8 +24,8 @@ const createOrganizationSchema = z.object({
 type CreateOrganizationForm = z.infer<typeof createOrganizationSchema>;
 
 export function CreateOrganizationForm() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const { switchOrganization } = useOrganization();
 
   const form = useForm<CreateOrganizationForm>({
     resolver: zodResolver(createOrganizationSchema),
@@ -36,7 +37,7 @@ export function CreateOrganizationForm() {
   async function onSubmit(data: CreateOrganizationForm) {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/organizations", {
+      const response = await fetch("/api/app/organizations", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,10 +49,12 @@ export function CreateOrganizationForm() {
         throw new Error("Failed to create organization");
       }
 
-      const result = await response.json();
-      router.push(`/organization/${result.slug}`);
+      const organization = await response.json();
+      toast.success("Organization created successfully");
+      await switchOrganization(organization.id);
     } catch (error) {
       console.error("Error creating organization:", error);
+      toast.error("Failed to create organization");
     } finally {
       setIsLoading(false);
     }

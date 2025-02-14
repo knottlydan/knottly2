@@ -1,15 +1,8 @@
-import { plans } from "@/db/schema/plans";
-import { roleEnum } from "@/db/schema/organization";
+import { organizations } from "@/db/schema";
+import { organizationMemberships } from "@/db/schema";
+import type { InferSelectModel } from "drizzle-orm";
 
-export interface CurrentWorkspace {
-  workspaceId: string;
-  membershipId: string;
-  role: typeof roleEnum; // TODO: Fix this
-  currentPlan: {
-    id: (typeof plans.$inferSelect)["id"];
-    name: (typeof plans.$inferSelect)["name"];
-    codename: (typeof plans.$inferSelect)["codename"];
-    quotas: (typeof plans.$inferSelect)["quotas"];
-    default: (typeof plans.$inferSelect)["default"];
-  } | null;
-}
+export type Organization = InferSelectModel<typeof organizations>;
+export type OrganizationMembership = InferSelectModel<
+  typeof organizationMemberships
+>;

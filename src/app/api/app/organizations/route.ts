@@ -2,10 +2,10 @@ import withAuthRequired from "@/lib/auth/withAuthRequired";
 import { organizations, organizationMemberships } from "@/db/schema";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
-import { kebabCase } from "lodash";
+import { createOrganization } from "@/lib/organizations/createOrganization";
+import { getUserOrganizations } from "@/lib/organizations/getUserOrganizations";
 
 const createOrganizationSchema = z.object({
   name: z.string().min(2, "Organization name must be at least 2 characters"),
@@ -17,37 +17,11 @@ export const POST = withAuthRequired(async (req, context) => {
     const { session } = context;
     const json = await req.json();
     const body = createOrganizationSchema.parse(json);
+    const user = await session.user;
 
-    // Create a unique slug from the name
-    const baseSlug = kebabCase(body.name);
-    let slug = baseSlug;
-    let counter = 1;
-
-    // Keep checking until we find a unique slug
-    while (true) {
-      const existing = await db
-        .select()
-        .from(organizations)
-        .where(eq(organizations.slug, slug));
-      if (!existing) break;
-      slug = `${baseSlug}-${counter}`;
-      counter++;
-    }
-
-    // Create the organization
-    const [organization] = await db
-      .insert(organizations)
-      .values({
-        name: body.name,
-        slug,
-      })
-      .returning();
-
-    // Add the creator as an owner
-    await db.insert(organizationMemberships).values({
-      organizationId: organization.id,
-      userId: session.user.id,
-      role: "owner",
+    const organization = await createOrganization({
+      name: body.name,
+      userId: user.id,
     });
 
     return NextResponse.json(organization);
@@ -65,16 +39,9 @@ export const POST = withAuthRequired(async (req, context) => {
 
 // Get my organizations
 export const GET = withAuthRequired(async (req, context) => {
-  const user = context.session.user;
+  const user = await context.session.user;
 
-  const organization = await db
-    .select()
-    .from(organizations)
-    .leftJoin(
-      organizationMemberships,
-      eq(organizations.id, organizationMemberships.organizationId)
-    )
-    .where(eq(organizationMemberships.userId, user.id));
+  const myOrganizations = await getUserOrganizations(user.id);
 
-  return NextResponse.json(organization);
+  return NextResponse.json(myOrganizations);
 });

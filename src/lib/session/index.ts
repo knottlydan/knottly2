@@ -9,9 +9,9 @@ export interface SessionValue {
 }
 
 export const getSession = async () => {
-  // @ts-expect-error - it's a bug in iron-session
-  const session = await getIronSession<SessionValue>(cookies(), {
-    password: process.env.SESSION_SECRET as string,
+  const cookieStore = await cookies();
+  const session = await getIronSession<SessionValue>(cookieStore, {
+    password: (process.env.SESSION_SECRET || process.env.AUTH_SECRET) as string,
     cookieName: SESSION_KEY,
   });
 
