@@ -1,8 +1,7 @@
-import { auth, signIn } from "@/auth";
+import { auth } from "@/auth";
 import { db } from "@/db";
 import { plans } from "@/db/schema/plans";
-import { users } from "@/db/schema/user";
-import { createCheckoutSession } from "@/lib/lemonsqueezy";
+import { createCheckoutSession, createCustomer } from "@/lib/lemonsqueezy";
 import {
   PlanProvider,
   PlanType,
@@ -10,10 +9,16 @@ import {
   SubscribeParams,
 } from "@/lib/plans/getSubscribeUrl";
 import stripe from "@/lib/stripe";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import React from "react";
 import { z } from "zod";
+import { getSession } from "@/lib/session";
+import { organizations } from "@/db/schema/organization";
+import { organizationMemberships } from "@/db/schema/organization-membership";
+import { OrganizationRole } from "@/db/schema";
+import OrganizationSelector from "./_components/organization-selector";
+import { getUserOrganizations } from "@/lib/organizations/getUserOrganizations";
 
 async function SubscribePage({
   searchParams,
@@ -41,22 +46,77 @@ async function SubscribePage({
   const session = await auth();
 
   if (!session?.user?.email) {
-    return signIn();
+    return redirect("/auth/login");
   }
 
-  const dbUsers = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, session.user.email))
-    .limit(1);
+  // Get current session to check for organization
+  const currentSession = await getSession();
+  const currentOrganizationId = currentSession.currentOrganizationId;
 
-  if (!dbUsers?.[0]) {
-    return signIn();
+  let currentOrganization;
+  if (currentOrganizationId) {
+    // Verify if user is part of this organization and has admin/owner role
+    const membership = await db
+      .select({
+        role: organizationMemberships.role,
+      })
+      .from(organizationMemberships)
+      .where(
+        and(
+          eq(organizationMemberships.organizationId, currentOrganizationId),
+          eq(organizationMemberships.userId, session.user.id)
+        )
+      )
+      .limit(1)
+      .then((memberships) => memberships[0]);
+
+    if (
+      membership &&
+      (membership.role === OrganizationRole.enum.admin ||
+        membership.role === OrganizationRole.enum.owner)
+    ) {
+      currentOrganization = await db
+        .select()
+        .from(organizations)
+        .where(eq(organizations.id, currentOrganizationId))
+        .limit(1)
+        .then((orgs) => orgs[0]);
+    }
   }
 
-  const user = dbUsers[0];
+  if (!currentOrganization) {
+    // Get all organizations where user is admin or owner
+    const userOrgs = await getUserOrganizations(session.user.id);
+    const adminOrgs = userOrgs.filter(
+      (org) =>
+        org.role === OrganizationRole.enum.admin ||
+        org.role === OrganizationRole.enum.owner
+    );
 
-  //   Step 1: Get the plan
+    if (adminOrgs.length === 0) {
+      return redirect(
+        `${process.env.NEXT_PUBLIC_APP_URL}/app/subscribe/error?code=NO_ADMIN_ACCESS`
+      );
+    }
+
+    if (adminOrgs.length === 1) {
+      currentOrganization = await db
+        .select()
+        .from(organizations)
+        .where(eq(organizations.id, adminOrgs[0].id))
+        .limit(1)
+        .then((orgs) => orgs[0]);
+    } else {
+      // Show organization selector
+      return <OrganizationSelector organizations={adminOrgs} />;
+    }
+  }
+
+  if (!currentOrganization) {
+    throw new Error("Organization not found");
+  }
+
+  // Get the plan
   const plansList = await db
     .select()
     .from(plans)
@@ -69,7 +129,6 @@ async function SubscribePage({
 
   const plan = plansList[0];
 
-  console.log("user", user);
   switch (provider) {
     case PlanProvider.STRIPE:
       // Check type and get price id from db
@@ -90,9 +149,8 @@ async function SubscribePage({
         return notFound();
       }
 
-      // Check if existing subscription for this user
-
-      if (user.stripeSubscriptionId) {
+      // Check if existing subscription for this organization
+      if (currentOrganization.stripeSubscriptionId) {
         // If this is onetime plan then redirect to error page with message to
         // cancel existing subscription
         if (type === PlanType.ONETIME) {
@@ -104,7 +162,26 @@ async function SubscribePage({
         return redirect(`${process.env.NEXT_PUBLIC_APP_URL}/app/billing`);
       }
 
-      //  Create checkout session
+      // Get or create Stripe customer
+      let stripeCustomerId = currentOrganization.stripeCustomerId;
+      if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: session.user.email,
+          name: currentOrganization.name,
+          metadata: {
+            organizationId: currentOrganization.id,
+          },
+        });
+        stripeCustomerId = customer.id;
+
+        // Update organization with Stripe customer ID
+        await db
+          .update(organizations)
+          .set({ stripeCustomerId })
+          .where(eq(organizations.id, currentOrganization.id));
+      }
+
+      // Create checkout session
       const stripeCheckoutSession = await stripe.checkout.sessions.create({
         mode: type === PlanType.ONETIME ? "payment" : "subscription",
         line_items: [
@@ -118,11 +195,13 @@ async function SubscribePage({
               trial_period_days: trialPeriodDays,
             }
           : undefined,
-        customer: user.stripeCustomerId ?? undefined,
-        customer_email: user.stripeCustomerId
-          ? undefined
-          : (session?.user?.email ?? undefined),
+        customer: stripeCustomerId,
         billing_address_collection: "required",
+        customer_update: {
+          name: "auto",
+          address: "auto",
+          shipping: "auto",
+        },
         tax_id_collection: {
           enabled: true,
         },
@@ -134,6 +213,7 @@ async function SubscribePage({
         throw new Error("Checkout session URL not found");
       }
       return redirect(stripeCheckoutSession.url);
+
     case PlanProvider.LEMON_SQUEEZY:
       const lemonsqueezyKey: keyof typeof plan | null =
         type === PlanType.MONTHLY
@@ -152,8 +232,8 @@ async function SubscribePage({
         return notFound();
       }
 
-      // Check if existing subscription for this user
-      if (user.lemonSqueezySubscriptionId) {
+      // Check if existing subscription for this organization
+      if (currentOrganization.lemonSqueezySubscriptionId) {
         // If this is onetime plan then redirect to error page with message to
         // cancel existing subscription
         if (type === PlanType.ONETIME) {
@@ -165,10 +245,31 @@ async function SubscribePage({
         return redirect(`${process.env.NEXT_PUBLIC_APP_URL}/app/billing`);
       }
 
+      // Get or create LemonSqueezy customer
+      let lemonSqueezyCustomerId = currentOrganization.lemonSqueezyCustomerId;
+      if (!lemonSqueezyCustomerId) {
+        const customer = await createCustomer({
+          name: currentOrganization.name,
+          email: session.user.email,
+          metadata: {
+            organizationId: currentOrganization.id,
+          },
+        });
+        lemonSqueezyCustomerId = customer.data.id;
+
+        // Update organization with LemonSqueezy customer ID
+        await db
+          .update(organizations)
+          .set({ lemonSqueezyCustomerId })
+          .where(eq(organizations.id, currentOrganization.id));
+      }
+
       const checkoutSession = await createCheckoutSession({
         variantId: lemonsqueezyVariantId,
-        customerEmail: session?.user?.email ?? "",
+        customerEmail: session.user.email,
+        customerId: lemonSqueezyCustomerId,
       });
+
       if (!checkoutSession.data.url) {
         throw new Error("Checkout session URL not found");
       }
