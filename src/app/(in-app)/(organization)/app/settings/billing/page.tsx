@@ -9,41 +9,74 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight } from "lucide-react";
-
-const planDetails = {
-  name: "Pro Plan",
-  price: "$19",
-  interval: "month",
-  status: "active",
-  nextBilling: "March 1, 2024",
-};
-
-const quotas = [
-  {
-    name: "API Requests",
-    used: 7532,
-    limit: 10000,
-    percentage: 75,
-  },
-  {
-    name: "Storage",
-    used: 2.1,
-    limit: 5,
-    unit: "GB",
-    percentage: 42,
-  },
-  {
-    name: "Team Members",
-    used: 3,
-    limit: 5,
-    percentage: 60,
-  },
-];
+import { ArrowUpRight, HelpCircle } from "lucide-react";
+import useOrganization from "@/lib/organizations/useOrganization";
+import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 
 export default function BillingSettingsPage() {
+  const { organization, isLoading, error } = useOrganization();
+
+  // Check if organization has a plan with quotas
+  const plan = organization?.plan;
+  const quotas = plan?.quotas;
+
+  // Determine subscription status
+  const hasSubscription = plan && !plan.default;
+
+  // Function to render quota features
+  const renderQuotaFeatures = () => {
+    if (!quotas) return null;
+
+    // Convert quotas object to array for mapping
+    const quotaItems = Object.entries(quotas).map(([key, value]) => {
+      // Format the key for display
+      const displayName = key
+        .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+        .replace(/^./, (str) => str.toUpperCase()); // Capitalize first letter
+      
+      // Format the value based on its type
+      let displayValue;
+      if (typeof value === 'boolean') {
+        // Show true/false values as Yes/No
+        displayValue = value ? "Yes" : "No";
+      } else if (typeof value === 'number') {
+        // Show numbers as-is
+        displayValue = value.toLocaleString();
+      } else {
+        // Show strings as-is
+        displayValue = value;
+      }
+      
+      return (
+        <div key={key} className="flex items-center justify-between py-2 border-b last:border-0">
+          <div className="font-medium text-sm">{displayName}</div>
+          <div className="text-sm">{displayValue}</div>
+        </div>
+      );
+    });
+    
+    return quotaItems.length > 0 ? (
+      <div className="space-y-0 divide-y">{quotaItems}</div>
+    ) : (
+      <p className="text-sm text-muted-foreground">No features information available.</p>
+    );
+  };
+
+  // Since UserOrganizationWithPlan doesn't have customer IDs, 
+  // we'll just show a contact support message instead
+  const customerIdSection = (
+    <div className="mt-4 pt-4 border-t">
+      <p className="text-xs text-muted-foreground">
+        Need help with your subscription? Please contact support and mention your organization ID: 
+        <span className="font-mono ml-1 bg-muted px-1 py-0.5 rounded text-xs">
+          {organization?.id || "Not available"}
+        </span>
+      </p>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -62,53 +95,73 @@ export default function BillingSettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-baseline justify-between">
-              <div>
-                <div className="text-2xl font-bold">
-                  {planDetails.name}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {planDetails.price}/{planDetails.interval}
-                </div>
+            {isLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
               </div>
-              <Badge variant="outline" className="capitalize">
-                {planDetails.status}
-              </Badge>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Next billing date: {planDetails.nextBilling}
-            </div>
+            ) : error ? (
+              <p className="text-sm text-destructive">
+                Error loading plan details. Please refresh the page.
+              </p>
+            ) : (
+              <>
+                <div className="flex items-baseline justify-between">
+                  <div>
+                    <div className="text-2xl font-bold">
+                      {plan?.name || "Free Plan"}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {!hasSubscription && (
+                        <span>Limited features and capabilities</span>
+                      )}
+                    </div>
+                  </div>
+                  <Badge variant={hasSubscription ? "default" : "outline"} className="capitalize">
+                    {hasSubscription ? "active" : "free"}
+                  </Badge>
+                </div>
+                {customerIdSection}
+              </>
+            )}
           </CardContent>
-          <CardFooter>
-            <Button variant="outline">
-              Manage Subscription
-              <ArrowUpRight className="ml-2 h-4 w-4" />
+          <CardFooter className="flex flex-wrap gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/app/billing">
+                Manage Subscription
+                <ArrowUpRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/contact">
+                Get Help
+                <HelpCircle className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
           </CardFooter>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Resource Usage</CardTitle>
+            <CardTitle>Your Plan Includes</CardTitle>
             <CardDescription>
-              Monitor your resource consumption.
+              Features and capabilities included in your current plan.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {quotas.map((quota) => (
-              <div key={quota.name} className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="font-medium">{quota.name}</div>
-                  <div className="text-muted-foreground">
-                    {quota.used}
-                    {quota.unit ? quota.unit : ""} /{" "}
-                    {quota.limit}
-                    {quota.unit ? quota.unit : ""}
-                  </div>
-                </div>
-                <Progress value={quota.percentage} className="h-2" />
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-full" />
               </div>
-            ))}
+            ) : error ? (
+              <p className="text-sm text-destructive">
+                Error loading plan features. Please refresh the page.
+              </p>
+            ) : (
+              renderQuotaFeatures()
+            )}
           </CardContent>
         </Card>
       </div>

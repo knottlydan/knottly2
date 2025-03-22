@@ -1,12 +1,20 @@
-import withAuthRequired from "@/lib/auth/withAuthRequired";
+import withOrganizationAuthRequired from "@/lib/auth/withOrganizationAuthRequired";
 import stripe from "@/lib/stripe";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
+import { OrganizationRole } from "@/db/schema/organization";
 
-export const GET = withAuthRequired(async (req, context) => {
-  const user = context.session.user;
+export const GET = withOrganizationAuthRequired(async (req, context) => {
+  const organization = await context.session.organization;
 
-  const stripeCustomerId = user.stripeCustomerId;
+  if (!organization) {
+    return NextResponse.json(
+      { message: "Organization not found" },
+      { status: 404 }
+    );
+  }
+
+  const stripeCustomerId = organization.stripeCustomerId;
 
   if (stripeCustomerId) {
     // create customer portal link
@@ -16,12 +24,22 @@ export const GET = withAuthRequired(async (req, context) => {
     });
     return redirect(portalSession.url);
   }
-  const lemonSqueezyCustomerId = user.lemonSqueezyCustomerId;
+
+  const lemonSqueezyCustomerId = organization.lemonSqueezyCustomerId;
   if (lemonSqueezyCustomerId) {
     // TODO: Get lemonSqueezy customer and redirect to lemonSqueezy customer portal
+    // Replace with actual implementation when LemonSqueezy is implemented
+    return NextResponse.json(
+      { 
+        message: "LemonSqueezy portal integration is not implemented yet.",
+        customerId: lemonSqueezyCustomerId
+      },
+      { status: 501 }
+    );
   }
 
-  return NextResponse.json({
-    message: "You are not subscribed to any plan.",
-  });
-});
+  return NextResponse.json(
+    { message: "Your organization is not subscribed to any plan." },
+    { status: 400 }
+  );
+}, OrganizationRole.enum.user); // Allow any organization member to access billing
