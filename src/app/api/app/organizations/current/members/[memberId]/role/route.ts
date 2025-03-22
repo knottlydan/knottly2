@@ -20,6 +20,14 @@ export const PATCH = withOrganizationAuthRequired(async (req, context) => {
   const params = await context.params;
   const memberId = params.memberId as string;
 
+  // You cannot change your own role
+  if (currentUser.id === memberId) {
+    return NextResponse.json(
+      { message: "You cannot change your own role", success: false },
+      { status: 400 }
+    );
+  }
+
   try {
     const { role } = updateRoleSchema.parse(await req.json());
 
@@ -114,4 +122,4 @@ export const PATCH = withOrganizationAuthRequired(async (req, context) => {
       { status: 500 }
     );
   }
-}, OrganizationRole.enum.owner);
+}, OrganizationRole.enum.admin);

@@ -11,7 +11,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTeam } from "./TeamContext";
 
 export function TeamMembers() {
-  const { membersData, isLoadingMembers, handleRoleChange, handleRemoveMember } = useTeam();
+  const { 
+    membersData, 
+    isLoadingMembers, 
+    handleRoleChange, 
+    handleRemoveMember,
+    canManageTeam 
+  } = useTeam();
 
   return (
     <Card>
@@ -78,7 +84,7 @@ export function TeamMembers() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {member.role !== "owner" && (
+                      {member.role !== "owner" && canManageTeam ? (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -102,7 +108,7 @@ export function TeamMembers() {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      )}
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))

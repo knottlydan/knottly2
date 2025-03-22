@@ -5,13 +5,14 @@ import { db } from "@/db";
 import { invitations } from "@/db/schema/invitation";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, and, count } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { render } from "@react-email/components";
 import InvitationEmail from "@/emails/InvitationEmail";
 import sendMail from "@/lib/email/sendMail";
 import { appConfig } from "@/lib/config";
 import { organizations } from "@/db/schema/organization";
+import { organizationMemberships } from "@/db/schema/organization-membership";
 
 // Get all invites for the current organization
 export const GET = withOrganizationAuthRequired(async (req, context) => {
@@ -43,6 +44,67 @@ export const POST = withOrganizationAuthRequired(async (req, context) => {
 
   try {
     const { email, role } = createInviteSchema.parse(await req.json());
+
+    // Check if this email already has a pending invite for this organization
+    const existingInvite = await db
+      .select()
+      .from(invitations)
+      .where(
+        and(
+          eq(invitations.organizationId, currentOrganization.id),
+          eq(invitations.email, email)
+        )
+      )
+      .limit(1)
+      .then((invites) => invites[0]);
+
+    if (existingInvite) {
+      return NextResponse.json(
+        { 
+          message: "This email already has a pending invitation",
+          success: false 
+        },
+        { status: 400 }
+      );
+    }
+
+    // Get current plan details and quotas
+    const planDetails = currentOrganization.plan;
+    
+    if (!planDetails) {
+      return NextResponse.json(
+        { 
+          message: "Organization has no active plan",
+          success: false 
+        },
+        { status: 400 }
+      );
+    }
+
+    // Calculate current and pending team members count
+    const [currentMembersCount] = await db
+      .select({ count: count() })
+      .from(organizationMemberships)
+      .where(eq(organizationMemberships.organizationId, currentOrganization.id));
+
+    const [pendingInvitesCount] = await db
+      .select({ count: count() })
+      .from(invitations)
+      .where(eq(invitations.organizationId, currentOrganization.id));
+
+    const totalTeamCount = (currentMembersCount?.count || 0) + (pendingInvitesCount?.count || 0);
+    // Check if adding one more would exceed the quota
+    const teamMembersQuota = planDetails.quotas?.teamMembers;
+
+    if (teamMembersQuota !== undefined && totalTeamCount >= teamMembersQuota) {
+      return NextResponse.json(
+        { 
+          message: `You have reached your team members limit (${teamMembersQuota}). Please upgrade your plan to add more team members.`,
+          success: false 
+        },
+        { status: 400 }
+      );
+    }
 
     const token = nanoid(32); // Generate a secure token for the invitation
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days

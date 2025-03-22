@@ -59,6 +59,7 @@ export function PlanForm({
         canUseApp: false,
         numberOfThings: 0,
         somethingElse: "",
+        teamMembers: 0,
       },
     },
   });
@@ -454,6 +455,24 @@ export function PlanForm({
                   <FormLabel>Something Else</FormLabel>
                   <FormControl>
                     <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="quotas.teamMembers"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Team Members</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

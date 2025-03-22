@@ -12,6 +12,7 @@ export const quotaSchema = z.object({
   canUseApp: z.boolean().default(true),
   numberOfThings: z.number(),
   somethingElse: z.string(),
+  teamMembers: z.number().default(1),
 });
 
 export type Quotas = z.infer<typeof quotaSchema>;
@@ -19,7 +20,8 @@ export type Quotas = z.infer<typeof quotaSchema>;
 export const defaultQuotas: Quotas = {
   canUseApp: false,
   numberOfThings: 10,
-  somethingElse: "something",
+  somethingElse: "string quota",
+  teamMembers: 1,
 };
 
 export const plans = pgTable("plans", {

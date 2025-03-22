@@ -16,6 +16,14 @@ export const DELETE = withOrganizationAuthRequired(async (req, context) => {
   const params = await context.params;
   const memberId = params.memberId as string;
 
+  // You cannot remove yourself
+  if (currentUser.id === memberId) {
+    return NextResponse.json(
+      { message: "You cannot remove yourself", success: false },
+      { status: 400 }
+    );
+  }
+
   try {
     // Check if the target member exists and is not the owner
     const targetMember = await db
@@ -96,4 +104,4 @@ export const DELETE = withOrganizationAuthRequired(async (req, context) => {
       { status: 500 }
     );
   }
-}, OrganizationRole.enum.owner); 
+}, OrganizationRole.enum.admin); 

@@ -9,7 +9,7 @@ import { InviteTableRowSkeleton } from "./InviteTableRowSkeleton";
 import { useTeam } from "./TeamContext";
 
 export function PendingInvites() {
-  const { invitesData, isLoadingInvites, handleRevokeInvite } = useTeam();
+  const { invitesData, isLoadingInvites, handleRevokeInvite, canManageTeam } = useTeam();
 
   if (!isLoadingInvites && (!invitesData?.invites || invitesData.invites.length === 0)) {
     return null;
@@ -30,7 +30,7 @@ export function PendingInvites() {
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Expires</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+              {canManageTeam && <TableHead className="w-[50px]"></TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -49,16 +49,18 @@ export function PendingInvites() {
                   <TableCell>
                     {new Date(invite.expiresAt).toLocaleDateString()}
                   </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRevokeInvite(invite.id)}
-                    >
-                      <X className="h-4 w-4" />
-                      <span className="sr-only">Revoke invite</span>
-                    </Button>
-                  </TableCell>
+                  {canManageTeam && (
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRevokeInvite(invite.id)}
+                      >
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Revoke invite</span>
+                      </Button>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}

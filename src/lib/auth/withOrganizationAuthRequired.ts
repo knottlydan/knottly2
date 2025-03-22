@@ -103,8 +103,8 @@ const withOrganizationAuthRequired = (
     ) {
       return NextResponse.json({
         error: "Forbidden",
-        message: "You do not have access to this organization",
-      });
+        message: "You do not have the required role to perform this action",
+      }, { status: 403 });
     }
 
     const sessionObject = {

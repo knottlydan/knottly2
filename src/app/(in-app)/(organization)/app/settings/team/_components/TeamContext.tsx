@@ -7,6 +7,7 @@ import { createContext, useContext, ReactNode, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { InvitesResponse, Member, MembersResponse } from "./types";
+import useOrganization from "@/lib/organizations/useOrganization";
 
 interface TeamContextType {
   // Data and loading states
@@ -45,11 +46,20 @@ interface TeamContextType {
   handleRoleChange: (member: Member) => void;
   handleRemoveMember: (member: Member) => void;
   handleRevokeInvite: (inviteId: string) => void;
+  
+  // Permissions
+  canManageTeam: boolean;
 }
 
 const TeamContext = createContext<TeamContextType | undefined>(undefined);
 
 export function TeamProvider({ children }: { children: ReactNode }) {
+  // Get organization data to check user's role
+  const { organization } = useOrganization();
+  
+  // Determine if user has admin/owner role to manage the team
+  const canManageTeam = organization?.role === "admin" || organization?.role === "owner";
+  
   // Data fetching with SWR
   const {
     data: invitesData,
@@ -88,8 +98,14 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  // Action handlers
+  // Action handlers with permission checks
   const onInviteSubmit = async (values: CreateInviteSchema) => {
+    // Check if user has permission
+    if (!canManageTeam) {
+      toast.error("You don't have permission to invite members");
+      return;
+    }
+    
     try {
       const response = await fetch("/api/app/organizations/current/invites", {
         method: "POST",
@@ -100,7 +116,8 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to send invite");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to send invite");
       }
 
       await mutateInvites();
@@ -109,11 +126,21 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       toast.success("Invitation sent successfully");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to send invitation");
+      if (error instanceof Error) {
+        toast.error(error.message || "Failed to send invitation");
+      } else {
+        toast.error("Failed to send invitation");
+      }
     }
   };
 
   const onRevokeInvite = async () => {
+    // Check if user has permission
+    if (!canManageTeam) {
+      toast.error("You don't have permission to revoke invitations");
+      return;
+    }
+    
     if (!selectedInviteId) return;
 
     try {
@@ -139,6 +166,12 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   };
 
   const onChangeRole = async (values: { role: "user" | "admin" }) => {
+    // Check if user has permission
+    if (!canManageTeam) {
+      toast.error("You don't have permission to change roles");
+      return;
+    }
+    
     if (!selectedMemberId) return;
 
     try {
@@ -154,7 +187,8 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to change role");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to change role");
       }
 
       await mutateMembers();
@@ -164,11 +198,21 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       toast.success("Role updated successfully");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update role");
+      if (error instanceof Error) {
+        toast.error(error.message || "Failed to update role");
+      } else {
+        toast.error("Failed to update role");
+      }
     }
   };
 
   const onRemoveMember = async () => {
+    // Check if user has permission
+    if (!canManageTeam) {
+      toast.error("You don't have permission to remove members");
+      return;
+    }
+    
     if (!selectedMemberId) return;
 
     try {
@@ -180,7 +224,8 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to remove member");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to remove member");
       }
 
       await mutateMembers();
@@ -189,11 +234,21 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       toast.success("Member removed successfully");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to remove member");
+      if (error instanceof Error) {
+        toast.error(error.message || "Failed to remove member");
+      } else {
+        toast.error("Failed to remove member");
+      }
     }
   };
 
   const handleRoleChange = (member: Member) => {
+    // Check if user has permission
+    if (!canManageTeam) {
+      toast.error("You don't have permission to change roles");
+      return;
+    }
+    
     if (member.role === "owner") return;
     setSelectedMemberId(member.id);
     roleForm.setValue("role", member.role === "admin" ? "admin" : "user");
@@ -201,12 +256,24 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   };
 
   const handleRemoveMember = (member: Member) => {
+    // Check if user has permission
+    if (!canManageTeam) {
+      toast.error("You don't have permission to remove members");
+      return;
+    }
+    
     if (member.role === "owner") return;
     setSelectedMemberId(member.id);
     setIsRemoveMemberDialogOpen(true);
   };
 
   const handleRevokeInvite = (inviteId: string) => {
+    // Check if user has permission
+    if (!canManageTeam) {
+      toast.error("You don't have permission to revoke invitations");
+      return;
+    }
+    
     setSelectedInviteId(inviteId);
     setIsRevokeDialogOpen(true);
   };
@@ -247,7 +314,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     onRemoveMember,
     handleRoleChange,
     handleRemoveMember,
-    handleRevokeInvite
+    handleRevokeInvite,
+    
+    // Permissions
+    canManageTeam,
   };
 
   return <TeamContext.Provider value={value}>{children}</TeamContext.Provider>;
