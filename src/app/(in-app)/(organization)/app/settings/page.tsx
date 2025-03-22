@@ -24,9 +24,12 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import useOrganization from "@/lib/organizations/useOrganization";
 import updateOrganizationSchema from "@/app/api/app/organizations/current/update/schema";
+import { Copy } from "lucide-react";
+import { useState } from "react";
 
 export default function OrganizationSettingsPage() {
   const { organization, mutate } = useOrganization();
+  const [copied, setCopied] = useState(false);
 
   const form = useForm<z.infer<typeof updateOrganizationSchema>>({
     resolver: zodResolver(updateOrganizationSchema),
@@ -34,6 +37,13 @@ export default function OrganizationSettingsPage() {
       name: organization?.name || "",
     },
   });
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    toast.success("Organization ID copied to clipboard");
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   async function onSubmit(values: z.infer<typeof updateOrganizationSchema>) {
     await toast.promise(
@@ -67,6 +77,7 @@ export default function OrganizationSettingsPage() {
           Manage your organization profile and settings.
         </p>
       </div>
+      
       <Card>
         <CardHeader>
           <CardTitle>General</CardTitle>
@@ -76,7 +87,7 @@ export default function OrganizationSettingsPage() {
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <CardContent>
+            <CardContent className="space-y-6">
               <FormField
                 control={form.control}
                 name="name"
@@ -90,6 +101,28 @@ export default function OrganizationSettingsPage() {
                   </FormItem>
                 )}
               />
+              
+              <div>
+                <FormLabel className="text-sm font-medium">Organization ID</FormLabel>
+                <div className="flex items-center mt-2">
+                  <code className="bg-muted px-3 py-2 rounded text-xs flex-1 font-mono">
+                    {organization?.id || "Loading..."}
+                  </code>
+                  <Button 
+                    type="button"
+                    size="icon" 
+                    variant="ghost" 
+                    className="ml-2"
+                    onClick={() => organization?.id && copyToClipboard(organization.id)}
+                    disabled={!organization?.id || copied}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Use this ID when contacting support about your organization.
+                </p>
+              </div>
             </CardContent>
             <CardFooter>
               <Button type="submit" disabled={form.formState.isSubmitting}>
