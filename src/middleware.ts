@@ -42,8 +42,12 @@ export async function middleware(req: NextRequest) {
   }
 
   if (req.nextUrl.pathname.startsWith("/super-admin")) {
-    // TODO: Check if user is super admin (by checking email using token via http call)
-    if (!session?.user) {
+    const email = session?.user?.email;
+    const isSuperAdmin =
+      process.env.SUPER_ADMIN_EMAILS?.split(",").includes(email);
+    const hasAccess = isSuperAdmin && !!email;
+
+    if (!hasAccess) {
       return NextResponse.redirect(
         new URL("/sign-in?error=unauthorized", req.url)
       );

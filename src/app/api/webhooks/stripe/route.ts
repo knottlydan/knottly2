@@ -2,42 +2,104 @@ import Stripe from "stripe";
 import stripe from "@/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
 import APIError from "@/lib/api/errors";
-import getOrCreateUser from "@/lib/users/getOrCreateUser";
-import { users } from "@/db/schema/user";
 import { plans } from "@/db/schema/plans";
 import { db } from "@/db";
 import { eq, or } from "drizzle-orm";
 import updatePlan from "@/lib/plans/updatePlan";
 import downgradeToDefaultPlan from "@/lib/plans/downgradeToDefaultPlan";
+import getOrCreateOrganizationByStripeCustomer from "@/lib/organizations/getOrCreateOrganizationByStripeCustomer";
+import { organizations, type Organization } from "@/db/schema/organization";
 
 class StripeWebhookHandler {
   private data: Stripe.Event.Data;
   private eventType: string;
+  private organization: Organization | null = null; // Will be set by resolveOrganization
 
   constructor(data: Stripe.Event.Data, eventType: string) {
     this.data = data;
     this.eventType = eventType;
   }
+
+  async resolveOrganization() {
+    let customerId: string | null = null;
+    let customerEmail: string | null = null;
+    let customerName: string | null = null;
+
+    // Extract customer information based on event type
+    if (this.eventType === "customer.created") {
+      const object = this.data.object as Stripe.Customer;
+      customerId = object.id;
+      customerEmail = object.email || null;
+      customerName = object.name || null;
+    } else if (this.eventType.startsWith("invoice.")) {
+      const object = this.data.object as Stripe.Invoice;
+      customerId =
+        typeof object.customer === "string"
+          ? object.customer
+          : object.customer?.id || null;
+      customerEmail = object.customer_email || null;
+      customerName = object.customer_name || null;
+    } else if (this.eventType.startsWith("customer.subscription.")) {
+      const object = this.data.object as Stripe.Subscription;
+      customerId =
+        typeof object.customer === "string"
+          ? object.customer
+          : object.customer?.id || null;
+
+      if (customerId) {
+        // Fetch customer details if we only have the ID
+        try {
+          const customer = await this._getStripeCustomer(object.customer);
+          customerEmail = customer?.email || null;
+          customerName = customer?.name || null;
+        } catch (error) {
+          console.error("Error fetching customer details:", error);
+        }
+      }
+    } else {
+      // Try to somehow get the organization from the event data
+      const object = this.data.object as {
+        customer?: string | Stripe.Customer | Stripe.DeletedCustomer;
+        customer_email?: string;
+        customer_name?: string;
+      };
+      customerId = object.customer
+        ? typeof object.customer === "string"
+          ? object.customer
+          : object.customer?.id || null
+        : null;
+      customerEmail = object.customer_email || null;
+      customerName = object.customer_name || null;
+    }
+
+    // If we have enough information, get or create the organization
+    if (customerId && customerEmail) {
+      const { organization } = await getOrCreateOrganizationByStripeCustomer({
+        stripeCustomerId: customerId,
+        customerEmail,
+        customerName,
+      });
+
+      this.organization = organization;
+    }
+  }
+
   async handleOutsidePlanManagementProductInvoicePaid() {
     // @ts-expect-error Stripe types are not fully compatible with Next.js
     const object: Stripe.Invoice = this.data.object;
     console.log("eventType", this.eventType);
     console.log("Outside plan management product invoice paid", object);
-    // TODO: Implement your own logic here ex: update user credits (if you have a credits system)
+    // TODO: Implement your own logic here ex: update organization credits (if you have a credits system)
   }
 
   async onInvoicePaid() {
-    // @ts-expect-error Stripe types are not fully compatible with Next.js
-    const object: Stripe.Invoice = this.data.object;
+    const object = this.data.object as Stripe.Invoice;
 
-    if (!object.customer_email) {
+    if (!this.organization) {
+      console.error("Organization not resolved for invoice.paid event");
       return;
     }
 
-    const { user } = await getOrCreateUser({
-      emailId: object.customer_email,
-      name: object.customer_name,
-    });
     // Get first item
     const item = object.lines.data[0];
     if (!item) {
@@ -59,7 +121,7 @@ class StripeWebhookHandler {
         await this.handleOutsidePlanManagementProductInvoicePaid();
       } else {
         await updatePlan({
-          userId: user.id,
+          organizationId: this.organization.id,
           newPlanId: dbPlan.id,
         });
       }
@@ -79,26 +141,28 @@ class StripeWebhookHandler {
           eq(plans.onetimeStripePriceId, priceId)
         )
       )
-      .limit(1);
+      .limit(1)
+      .then((res) => res[0]);
 
-    if (plan.length === 0) {
+    if (!plan) {
       return null;
     }
 
-    return plan[0];
+    return plan;
   }
 
   async onSubscriptionUpdated() {
-    // @ts-expect-error Stripe types are not fully compatible with Next.js
-    const object: Stripe.Subscription = this.data.object;
+    const object = this.data.object as Stripe.Subscription;
 
-    const user = await db
+    const org = await db
       .select()
-      .from(users)
-      .where(eq(users.stripeSubscriptionId, object.id))
-      .limit(1);
-    if (!user?.[0]) {
-      // Subscription is not for this user, skip
+      .from(organizations)
+      .where(eq(organizations.stripeSubscriptionId, object.id))
+      .limit(1)
+      .then((res) => res[0]);
+
+    if (!org) {
+      // Subscription is not for this organization, skip
       return;
     }
 
@@ -111,7 +175,7 @@ class StripeWebhookHandler {
 
     if (!isActive) {
       // Subscription is cancelled, downgrade to free plan
-      await downgradeToDefaultPlan({ userId: user[0].id });
+      await downgradeToDefaultPlan({ organizationId: org.id });
       return;
     }
 
@@ -121,7 +185,7 @@ class StripeWebhookHandler {
       return;
     }
 
-    await updatePlan({ userId: user[0].id, newPlanId: dbPlan.id });
+    await updatePlan({ organizationId: org.id, newPlanId: dbPlan.id });
   }
 
   async _getStripeCustomer(
@@ -141,65 +205,67 @@ class StripeWebhookHandler {
   }
 
   async onSubscriptionCreated() {
-    // @ts-expect-error Stripe types are not fully compatible with Next.js
-    const object: Stripe.Subscription = this.data.object;
-    const price = object.items.data[0].price;
+    const object = this.data.object as Stripe.Subscription;
 
+    if (!this.organization) {
+      console.error("Organization not resolved for subscription.created event");
+      return;
+    }
+
+    const price = object.items.data[0].price;
     if (!price) {
       throw new APIError("No price found in subscription");
     }
 
-    const customer = await this._getStripeCustomer(object.customer);
-    if (!customer || !customer.email) {
-      throw new APIError("No customer found in subscription");
-    }
-    const { user } = await getOrCreateUser({
-      emailId: customer.email,
-      name: customer.name,
-    });
     const dbPlan = await this._getPlanFromStripePriceId(price.id);
-
     if (!dbPlan) {
       // TIP: Handle outside plan management subscription
       throw new APIError("Plan not found");
     }
+
+    // Update the organization with the subscription ID
     await db
-      .update(users)
+      .update(organizations)
       .set({ stripeSubscriptionId: object.id })
-      .where(eq(users.id, user.id));
-    await updatePlan({ userId: user.id, newPlanId: dbPlan.id });
+      .where(eq(organizations.id, this.organization.id))
+      .returning()
+      .then(() => {});
+
+    await updatePlan({
+      organizationId: this.organization.id,
+      newPlanId: dbPlan.id,
+    });
   }
 
   async onSubscriptionDeleted() {
-    // @ts-expect-error Stripe types are not fully compatible with Next.js
-    const object: Stripe.Subscription = this.data.object;
+    const object = this.data.object as Stripe.Subscription;
 
-    const user = await db
+    const org = await db
       .select()
-      .from(users)
-      .where(eq(users.stripeSubscriptionId, object.id))
-      .limit(1);
-    if (!user?.[0]) {
-      // Subscription is not for this user, skip
+      .from(organizations)
+      .where(eq(organizations.stripeSubscriptionId, object.id))
+      .limit(1)
+      .then((res) => res[0]);
+
+    if (!org) {
+      // Subscription is not for this organization, skip
       return;
     }
-    await downgradeToDefaultPlan({ userId: user[0].id });
+
+    await downgradeToDefaultPlan({ organizationId: org.id });
   }
 
   async onCustomerCreated() {
-    // @ts-expect-error Stripe types are not fully compatible with Next.js
-    const object: Stripe.Customer = this.data.object;
-    if (!object.email) {
-      throw new APIError("No email found in customer");
+    // Organization should already be resolved at this point
+    if (!this.organization) {
+      console.error("Organization not resolved for customer.created event");
+      return;
     }
-    const { user } = await getOrCreateUser({
-      emailId: object.email,
-      name: object.name,
-    });
-    await db
-      .update(users)
-      .set({ stripeCustomerId: object.id })
-      .where(eq(users.id, user.id));
+
+    console.log(
+      "Customer created and organization resolved:",
+      this.organization.id
+    );
   }
 }
 
@@ -236,6 +302,10 @@ async function handler(req: NextRequest) {
     }
 
     const handler = new StripeWebhookHandler(data, eventType);
+
+    // Resolve organization before handling any events
+    await handler.resolveOrganization();
+
     try {
       switch (eventType) {
         case "invoice.paid":

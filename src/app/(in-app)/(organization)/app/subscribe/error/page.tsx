@@ -9,10 +9,14 @@ interface ErrorMessages {
 
 const errorMessages: ErrorMessages = {
   STRIPE_CANCEL_BEFORE_SUBSCRIBING:
-    "Please cancel your current subscription befo re subscribing to a new onetime plan.",
+    "Please cancel your current subscription before subscribing to a new onetime plan.",
   LEMON_SQUEEZY_CANCEL_BEFORE_SUBSCRIBING:
     "Please cancel your current subscription before subscribing to a new onetime plan.",
   INVALID_PARAMS: "Invalid parameters.",
+  PLAN_NOT_FOUND: "The requested subscription plan could not be found.",
+  PAYMENT_INCOMPLETE: "Your payment was not completed. Please try again.",
+  SESSION_VERIFICATION_FAILED: "We could not verify your payment session. Please contact support if you believe this is an error.",
+  NO_ADMIN_ACCESS: "You need administrative access to an organization to subscribe to a plan.",
 };
 
 export default async function SubscribeErrorPage({
