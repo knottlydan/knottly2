@@ -33,6 +33,7 @@ export function DeleteAccountSection() {
       // Redirect to home page or sign out
       window.location.href = "/"
     } catch (error) {
+      console.error("Failed to delete account", error);
       toast.error("Failed to delete account")
     } finally {
       setIsDeleting(false)

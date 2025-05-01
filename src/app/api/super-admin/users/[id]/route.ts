@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema/user";
 import { organizations } from "@/db/schema/organization";
 import { organizationMemberships } from "@/db/schema/organization-membership";
-import { eq, and, count, ne } from "drizzle-orm";
+import { eq, and, count } from "drizzle-orm";
 
 export const GET = withSuperAdminAuthRequired(async (req, context) => {
   const { id } = await context.params as { id: string };

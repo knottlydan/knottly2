@@ -13,9 +13,9 @@ import {
 import { organizationMemberships } from "@/db/schema";
 
 interface AcceptInvitePageProps {
-  searchParams: {
+  searchParams: Promise<{
     token?: string;
-  };
+  }>;
 }
 
 export default async function AcceptInvitePage({
@@ -27,7 +27,9 @@ export default async function AcceptInvitePage({
     redirect("/auth/login");
   }
 
-  if (!searchParams.token) {
+  const { token } = await searchParams;
+
+  if (!token) {
     return (
       <Card className="max-w-md mx-auto">
         <CardHeader>
@@ -44,7 +46,7 @@ export default async function AcceptInvitePage({
   const dbInvite = await db
     .select()
     .from(invitations)
-    .where(and(eq(invitations.token, searchParams.token)))
+    .where(and(eq(invitations.token, token)))
     .limit(1)
     .then((invites) => invites[0]);
 

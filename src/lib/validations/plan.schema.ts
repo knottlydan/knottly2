@@ -5,6 +5,7 @@ export const planFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   codename: z.string().min(1, "Codename is required"),
   default: z.boolean().default(false),
+  requiredCouponCount: z.number().min(0, "Required coupons must be non-negative").nullable(),
   hasOnetimePricing: z.boolean().default(false),
   hasMonthlyPricing: z.boolean().default(false),
   hasYearlyPricing: z.boolean().default(false),

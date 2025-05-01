@@ -1,10 +1,10 @@
-import { MeResponse } from "@/app/api/app/me/types";
-import useSWR from "swr";
+
+import useOrganization from "../organizations/useOrganization";
 
 const useCurrentPlan = () => {
-  const { data, isLoading, error } = useSWR<MeResponse>("/api/app/me");
+  const { organization, isLoading, error } = useOrganization();
 
-  return { currentPlan: data?.currentPlan, isLoading, error };
+  return { currentPlan: organization?.plan, isLoading, error };
 };
 
 export default useCurrentPlan;

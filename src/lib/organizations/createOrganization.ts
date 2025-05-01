@@ -3,7 +3,6 @@ import { onboardingDataSchema, organizations } from "@/db/schema/organization";
 import { organizationMemberships } from "@/db/schema/organization-membership";
 import { plans } from "@/db/schema/plans";
 import { eq } from "drizzle-orm";
-import { kebabCase } from "lodash";
 import { getZodDefaults } from "../utils";
 
 export type CreateOrganizationInput = {
@@ -23,7 +22,7 @@ export async function createOrganization({
     .limit(1);
 
   // Generate a unique slug from the organization name
-  const baseSlug = kebabCase(name);
+  const baseSlug = name.toLowerCase().replace(/ /g, "-");
   let slug = baseSlug;
   let counter = 1;
 

@@ -1,9 +1,6 @@
 import withAuthRequired from "@/lib/auth/withAuthRequired";
-import { organizations, organizationMemberships } from "@/db/schema";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "@/db";
-import { eq } from "drizzle-orm";
 import { createOrganization } from "@/lib/organizations/createOrganization";
 import { getUserOrganizations } from "@/lib/organizations/getUserOrganizations";
 

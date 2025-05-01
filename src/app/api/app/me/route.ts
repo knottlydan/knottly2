@@ -37,9 +37,7 @@ export const PATCH = withAuthRequired(async (req, context) => {
 });
 
 // TODO: Implement actual account deletion logic
-export const DELETE = withAuthRequired(async (req, context) => {
-  const { session } = context;
-
+export const DELETE = withAuthRequired(async () => {
   // For now, just return a success response
   return NextResponse.json({ success: true });
 });

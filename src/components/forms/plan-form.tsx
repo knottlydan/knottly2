@@ -40,6 +40,7 @@ export function PlanForm({
       name: "",
       codename: "",
       default: false,
+      requiredCouponCount: null,
       hasOnetimePricing: false,
       hasMonthlyPricing: false,
       monthlyStripePriceId: "",
@@ -109,6 +110,31 @@ export function PlanForm({
                   <FormDescription>
                     Unique identifier for the plan (e.g., &ldquo;pro&rdquo;,
                     &ldquo;basic&rdquo;)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="requiredCouponCount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Required Coupon Count</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="Leave empty for no requirement"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) => {
+                        const value = e.target.value === "" ? null : Number(e.target.value);
+                        field.onChange(value);
+                      }}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Number of coupons required to activate this plan. Useful for lifetime deals where multiple coupons need to be applied.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

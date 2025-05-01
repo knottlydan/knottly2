@@ -48,7 +48,7 @@ export default function UserSettingsPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit() {
     toast.success("Profile updated successfully");
   }
 

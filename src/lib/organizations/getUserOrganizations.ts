@@ -18,7 +18,7 @@ export type UserOrganization = Pick<
 export type UserOrganizationWithPlan = UserOrganization & {
   plan: Pick<
     InferSelectModel<typeof plans>,
-    "id" | "name" | "default" | "codename" | "quotas"
+    "id" | "name" | "default" | "codename" | "quotas" | "requiredCouponCount"
   > | null;
 };
 
@@ -91,6 +91,7 @@ export const getUserOrganizationById = async (
       default: plans.default,
       codename: plans.codename,
       quotas: plans.quotas,
+      requiredCouponCount: plans.requiredCouponCount,
     })
     .from(plans)
     .where(eq(plans.id, organization.planId))

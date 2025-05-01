@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Menu,
   Building,
+  Ticket,
 } from "lucide-react";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { appConfig } from "@/lib/config";
@@ -29,6 +30,7 @@ const navigation = [
   { name: "Plans", href: "/super-admin/plans", icon: CreditCard },
   { name: "Users", href: "/super-admin/users", icon: Users },
   { name: "Organizations", href: "/super-admin/organizations", icon: Building },
+  { name: "Lifetime Deal", href: "/super-admin/coupons", icon: Ticket },
   { name: "Messages", href: "/super-admin/messages", icon: MessageSquare },
   { name: "Waitlist", href: "/super-admin/waitlist", icon: ClipboardList },
   { name: "Logout", href: "/super-admin/logout", icon: LogOut },

@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, HelpCircle } from "lucide-react";
+import { ArrowUpRight, HelpCircle, TicketCheck } from "lucide-react";
 import useOrganization from "@/lib/organizations/useOrganization";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
@@ -33,43 +33,49 @@ export default function BillingSettingsPage() {
     const quotaItems = Object.entries(quotas).map(([key, value]) => {
       // Format the key for display
       const displayName = key
-        .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+        .replace(/([A-Z])/g, " $1") // Add space before capital letters
         .replace(/^./, (str) => str.toUpperCase()); // Capitalize first letter
-      
+
       // Format the value based on its type
       let displayValue;
-      if (typeof value === 'boolean') {
+      if (typeof value === "boolean") {
         // Show true/false values as Yes/No
         displayValue = value ? "Yes" : "No";
-      } else if (typeof value === 'number') {
+      } else if (typeof value === "number") {
         // Show numbers as-is
         displayValue = value.toLocaleString();
       } else {
         // Show strings as-is
         displayValue = value;
       }
-      
+
       return (
-        <div key={key} className="flex items-center justify-between py-2 border-b last:border-0">
+        <div
+          key={key}
+          className="flex items-center justify-between py-2 border-b last:border-0"
+        >
           <div className="font-medium text-sm">{displayName}</div>
           <div className="text-sm">{displayValue}</div>
         </div>
       );
     });
-    
+
     return quotaItems.length > 0 ? (
       <div className="space-y-0 divide-y">{quotaItems}</div>
     ) : (
-      <p className="text-sm text-muted-foreground">No features information available.</p>
+      <p className="text-sm text-muted-foreground">
+        No features information available.
+      </p>
     );
   };
 
-  // Since UserOrganizationWithPlan doesn't have customer IDs, 
+  // Since UserOrganizationWithPlan doesn't have customer IDs,
   // we'll just show a contact support message instead
   const customerIdSection = (
     <div className="mt-4 pt-4 border-t">
       <p className="text-xs text-muted-foreground">
-        Need help with your subscription? Please contact support and mention your organization ID: 
+        Need help with your subscription? Please contact support and mention
+        your organization ID:
         <span className="font-mono ml-1 bg-muted px-1 py-0.5 rounded text-xs">
           {organization?.id || "Not available"}
         </span>
@@ -117,7 +123,10 @@ export default function BillingSettingsPage() {
                       )}
                     </div>
                   </div>
-                  <Badge variant={hasSubscription ? "default" : "outline"} className="capitalize">
+                  <Badge
+                    variant={hasSubscription ? "default" : "outline"}
+                    className="capitalize"
+                  >
                     {hasSubscription ? "active" : "free"}
                   </Badge>
                 </div>
@@ -136,6 +145,12 @@ export default function BillingSettingsPage() {
               <Link href="/contact">
                 Get Help
                 <HelpCircle className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/app/settings/billing/redeem-ltd">
+                Redeem LTD Code
+                <TicketCheck className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </CardFooter>
@@ -167,4 +182,4 @@ export default function BillingSettingsPage() {
       </div>
     </div>
   );
-} 
+}

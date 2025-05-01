@@ -67,6 +67,13 @@ interface OrganizationDetails {
   }>;
 }
 
+interface RedeemedCoupon {
+  id: string;
+  code: string;
+  usedAt: string;
+  expired: boolean;
+}
+
 export default function OrganizationDetailsPage() {
   const { id } = useParams() as { id: string };
   const router = useRouter();
@@ -80,6 +87,10 @@ export default function OrganizationDetailsPage() {
   );
 
   const { data: plansList } = useSWR('/api/super-admin/plans?limit=100');
+  
+  const { data: redeemedCoupons } = useSWR<RedeemedCoupon[]>(
+    `/api/super-admin/organizations/${id}/coupons`
+  );
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString();
@@ -465,6 +476,57 @@ export default function OrganizationDetailsPage() {
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Redeemed Coupons</CardTitle>
+          <CardDescription>
+            Coupons that have been redeemed by this organization.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Code</TableHead>
+                <TableHead>Redeemed At</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {!redeemedCoupons ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center h-24">
+                    Loading coupons...
+                  </TableCell>
+                </TableRow>
+              ) : redeemedCoupons.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center h-24">
+                    No redeemed coupons found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                redeemedCoupons.map((coupon) => (
+                  <TableRow key={coupon.id}>
+                    <TableCell className="font-mono">{coupon.code}</TableCell>
+                    <TableCell>
+                      {formatDate(coupon.usedAt)} at {new Date(coupon.usedAt).toLocaleTimeString()}
+                    </TableCell>
+                    <TableCell>
+                      {coupon.expired ? (
+                        <Badge variant="destructive">Expired</Badge>
+                      ) : (
+                        <Badge variant="outline">Active</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 } 
