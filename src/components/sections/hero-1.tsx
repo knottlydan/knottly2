@@ -7,7 +7,7 @@ import Image from "next/image";
 const Hero1 = () => {
   return (
     <section className="mb-32 border-b pt-32">
-      <div className="container">
+      <div className="container mx-auto">
         <div className="relative pb-16">
           <div className="magicpattern absolute inset-x-0 top-0 -z-10 flex h-full w-full items-center justify-center opacity-100" />
           <a
@@ -52,7 +52,8 @@ const Hero1 = () => {
             src="https://shadcnblocks.com/images/block/placeholder.svg"
             alt="placeholder"
             className="max-h-80 w-full rounded-t-lg object-cover md:max-h-[430px]"
-            fill
+            width={600}
+            height={430}
           />
         </div>
       </div>
