@@ -40,7 +40,9 @@ const getSubscribeUrl = ({
   provider,
   trialPeriodDays,
 }: SubscribeParams) => {
-  return `${process.env.NEXT_PUBLIC_APP_URL}/app/subscribe?codename=${codename}&type=${type}&provider=${provider}&trialPeriodDays=${trialPeriodDays}`;
+  let url = `${process.env.NEXT_PUBLIC_APP_URL}/app/subscribe?codename=${codename}&type=${type}&provider=${provider}`;
+  if (trialPeriodDays) {
+    url += `&trialPeriodDays=${trialPeriodDays}`;
+  }
+  return url;
 };
-
-export default getSubscribeUrl;

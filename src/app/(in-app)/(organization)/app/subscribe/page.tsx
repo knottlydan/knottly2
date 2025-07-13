@@ -209,6 +209,7 @@ async function SubscribePage({
             }
           : undefined,
         customer: stripeCustomerId,
+        customer_email: session.user.email,
         billing_address_collection: "required",
         customer_update: {
           name: "auto",
