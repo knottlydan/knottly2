@@ -46,3 +46,5 @@ const getSubscribeUrl = ({
   }
   return url;
 };
+
+export default getSubscribeUrl;
