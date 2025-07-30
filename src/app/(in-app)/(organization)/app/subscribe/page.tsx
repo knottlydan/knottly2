@@ -153,10 +153,10 @@ async function SubscribePage({
         type === PlanType.MONTHLY
           ? "monthlyStripePriceId"
           : type === PlanType.YEARLY
-          ? "yearlyStripePriceId"
-          : type === PlanType.ONETIME
-          ? "onetimeStripePriceId"
-          : null;
+            ? "yearlyStripePriceId"
+            : type === PlanType.ONETIME
+              ? "onetimeStripePriceId"
+              : null;
 
       if (!key) {
         return notFound();
@@ -223,6 +223,7 @@ async function SubscribePage({
         tax_id_collection: {
           enabled: true,
         },
+        customer_creation: stripeCustomerId ? undefined : "always",
         success_url: `${process.env.NEXT_PUBLIC_APP_URL}/app/subscribe/success?provider=${provider}&codename=${codename}&type=${type}&sessionId={CHECKOUT_SESSION_ID}&trialPeriodDays=${trialPeriodDays}`,
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/app/subscribe/cancel?provider=${provider}&codename=${codename}&type=${type}&sessionId={CHECKOUT_SESSION_ID}&trialPeriodDays=${trialPeriodDays}`,
       });
@@ -237,10 +238,10 @@ async function SubscribePage({
         type === PlanType.MONTHLY
           ? "monthlyLemonSqueezyVariantId"
           : type === PlanType.YEARLY
-          ? "yearlyLemonSqueezyVariantId"
-          : type === PlanType.ONETIME
-          ? "onetimeLemonSqueezyVariantId"
-          : null;
+            ? "yearlyLemonSqueezyVariantId"
+            : type === PlanType.ONETIME
+              ? "onetimeLemonSqueezyVariantId"
+              : null;
 
       if (!lemonsqueezyKey) {
         return notFound();
@@ -298,10 +299,10 @@ async function SubscribePage({
         type === PlanType.MONTHLY
           ? "monthlyDodoProductId"
           : type === PlanType.YEARLY
-          ? "yearlyDodoProductId"
-          : type === PlanType.ONETIME
-          ? "onetimeDodoProductId"
-          : null;
+            ? "yearlyDodoProductId"
+            : type === PlanType.ONETIME
+              ? "onetimeDodoProductId"
+              : null;
 
       if (!dodoKey) {
         return notFound();
@@ -414,6 +415,11 @@ async function SubscribePage({
       // If this is one time plan then create Order
       // else create subscription
       if (type === PlanType.ONETIME) {
+        const orderLink = await createPaypalOrderLink(
+          plan.id,
+          session.user.id,
+          currentOrganization.id
+        );
         const orderLink = await createPaypalOrderLink(plan.id, session.user.id, currentOrganization.id);
         return redirect(orderLink);
       } else {

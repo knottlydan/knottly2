@@ -255,6 +255,50 @@ class StripeWebhookHandler {
     await downgradeToDefaultPlan({ organizationId: org.id });
   }
 
+  async onCheckoutSessionCompleted() {
+    const object = this.data.object as Stripe.Checkout.Session;
+
+    // Only proceed if payment was successful
+    if (object.payment_status !== "paid") {
+      return;
+    }
+
+    // If this is a subscription checkout, let subscription events handle it
+    if (object.mode === "subscription") {
+      return;
+    }
+
+    if (!this.organization) {
+      console.error("Organization not resolved for checkout.session.completed event");
+      return;
+    }
+
+    // Get line items to find the plan
+    const lineItems = await stripe.checkout.sessions.listLineItems(object.id);
+
+    if (lineItems.data.length === 0) {
+      throw new APIError("No line items found in checkout session");
+    }
+
+    const firstItem = lineItems.data[0];
+    if (!firstItem.price) {
+      throw new APIError("No price found in checkout session line item");
+    }
+
+    const dbPlan = await this._getPlanFromStripePriceId(firstItem.price.id);
+
+    if (!dbPlan) {
+      // Handle outside plan management product
+      await this.handleOutsidePlanManagementProductInvoicePaid();
+      return;
+    }
+
+    await updatePlan({
+      organizationId: this.organization.id,
+      newPlanId: dbPlan.id,
+    });
+  }
+
   async onCustomerCreated() {
     // Organization should already be resolved at this point
     if (!this.organization) {
@@ -310,6 +354,9 @@ async function handler(req: NextRequest) {
       switch (eventType) {
         case "invoice.paid":
           await handler.onInvoicePaid();
+          break;
+        case "checkout.session.completed":
+          await handler.onCheckoutSessionCompleted();
           break;
         case "customer.created":
           await handler.onCustomerCreated();
