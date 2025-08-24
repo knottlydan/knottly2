@@ -71,7 +71,7 @@ export function NavUser({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-[240px] rounded-xl p-2"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-[240px] rounded-xl p-2"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={8}

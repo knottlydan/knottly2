@@ -52,7 +52,7 @@ export default function BillingSettingsPage() {
       return (
         <div
           key={key}
-          className="flex items-center justify-between py-2 border-b last:border-0"
+          className="flex items-center justify-between py-2 border-b last:border-hidden"
         >
           <div className="font-medium text-sm">{displayName}</div>
           <div className="text-sm">{displayValue}</div>

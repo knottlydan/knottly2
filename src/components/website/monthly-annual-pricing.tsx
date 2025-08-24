@@ -7,13 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ShineBorder } from "../magicui/shine-border";
 
 const MonthlyAnnualPricing = () => {
   const [isAnnually, setIsAnnually] = useState(false);
   return (
     <section className="py-32">
       <div className="container">
-        <div className="mx-auto mb-20 max-w-screen-md text-center">
+        <div className="mx-auto mb-20 max-w-(--breakpoint-md) text-center">
           <p className="text-primary font-medium mb-4">Special Launch Offer</p>
           <h2 className="mb-4 text-4xl tracking-tight font-bold lg:text-5xl">Simple, Transparent Pricing</h2>
           <p className="text-muted-foreground text-lg">
@@ -65,8 +66,9 @@ const MonthlyAnnualPricing = () => {
               </div>
             </RadioGroup>
           </div>
-          <div className="mt-12 grid max-w-screen-md gap-8 md:grid-cols-2">
-            <div className="rounded-xl border-2 p-8 hover:border-primary/20 transition-colors">
+          <div className="mt-12 grid max-w-(--breakpoint-md) gap-8 md:grid-cols-2">
+            <div className="relative rounded-xl border p-8 hover:border-primary/20 transition-colors">
+              <ShineBorder/>
               <div className="flex h-full flex-col justify-between gap-6">
                 <div>
                   <h3 className="mb-4 text-2xl font-bold">Basic Plan</h3>
@@ -106,7 +108,7 @@ const MonthlyAnnualPricing = () => {
                 <Button size="lg" className="mt-8">Start a free trial</Button>
               </div>
             </div>
-            <div className="rounded-xl border-2 p-8 hover:border-primary/20 transition-colors">
+            <div className="rounded-xl border p-8 hover:border-primary/20 transition-colors">
               <div className="flex h-full flex-col justify-between gap-6">
                 <div>
                   <h3 className="mb-4 text-2xl font-bold">Pro Plan</h3>

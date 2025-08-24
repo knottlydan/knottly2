@@ -131,7 +131,7 @@ function SidebarContent({ className, isCollapsed }: { className?: string; isColl
           href="https://docs.indiekit.com"
           icon={FileText}
           isCollapsed={isCollapsed}
-          className="!text-muted-foreground hover:!text-accent-foreground"
+          className="text-muted-foreground! hover:text-accent-foreground!"
         >
           Documentation
         </NavItem>
@@ -139,7 +139,7 @@ function SidebarContent({ className, isCollapsed }: { className?: string; isColl
           href="https://roadmap.indiekit.com"
           icon={Map}
           isCollapsed={isCollapsed}
-          className="!text-muted-foreground hover:!text-accent-foreground"
+          className="text-muted-foreground! hover:text-accent-foreground!"
         >
           Roadmap
         </NavItem>

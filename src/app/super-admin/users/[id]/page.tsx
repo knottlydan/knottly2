@@ -286,7 +286,7 @@ export default function UserDetailsPage() {
             <CardContent>
               <ul className="space-y-3">
                 {user.organizations.map((org) => (
-                  <li key={org.id} className="flex justify-between items-center border-b pb-2 last:border-0">
+                  <li key={org.id} className="flex justify-between items-center border-b pb-2 last:border-hidden">
                     <div>
                       <Link 
                         href={`/super-admin/organizations/${org.id}`}

@@ -158,7 +158,7 @@ export function AppSidebar({ className, ...props }: React.ComponentProps<typeof 
     <Sidebar 
       collapsible="icon" 
       className={cn(
-        "bg-gradient-to-b from-background/80 to-background border-r border-border/40 backdrop-blur-xl",
+        "bg-linear-to-b from-background/80 to-background border-r border-border/40 backdrop-blur-xl",
         className
       )}
       {...props}

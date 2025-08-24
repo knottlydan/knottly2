@@ -420,7 +420,6 @@ async function SubscribePage({
           session.user.id,
           currentOrganization.id
         );
-        const orderLink = await createPaypalOrderLink(plan.id, session.user.id, currentOrganization.id);
         return redirect(orderLink);
       } else {
         const subscriptionLink = await createPaypalSubscriptionLink(

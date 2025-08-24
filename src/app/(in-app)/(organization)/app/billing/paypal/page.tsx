@@ -94,7 +94,7 @@ function PaypalSubscriptionManager() {
             return (
               <div
                 key={ctx.id}
-                className="border rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between gap-2 bg-background shadow-sm transition hover:shadow-md"
+                className="border rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between gap-2 bg-background shadow-xs transition hover:shadow-md"
               >
                 <div>
                   <div className="flex items-center gap-2 mb-1">

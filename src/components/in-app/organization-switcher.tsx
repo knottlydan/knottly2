@@ -124,7 +124,7 @@ export function OrganizationSwitcher({
             href="/app/create-organization"
             className="flex items-center gap-2 p-2 text-primary"
           >
-            <div className="h-8 w-8 rounded-md border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-md border border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
               <Plus className="h-4 w-4" />
             </div>
             <span className="font-medium">Create Organization</span>
