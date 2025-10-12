@@ -215,11 +215,13 @@ async function SubscribePage({
         customer: stripeCustomerId,
         customer_email: session.user.email,
         billing_address_collection: "required",
-        customer_update: {
-          name: "auto",
-          address: "auto",
-          shipping: "auto",
-        },
+        customer_update: currentOrganization.stripeCustomerId
+          ? {
+              name: "auto",
+              address: "auto",
+              shipping: "auto",
+            }
+          : undefined,
         tax_id_collection: {
           enabled: true,
         },
