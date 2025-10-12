@@ -40,6 +40,14 @@ export async function middleware(req: NextRequest) {
     }
     return NextResponse.next();
   }
+  const isAPI = req.nextUrl.pathname.startsWith("/api/app");
+
+  if (isAPI) {
+    if (!isAuth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
 
   if (req.nextUrl.pathname.startsWith("/super-admin")) {
     const email = session?.user?.email;
@@ -61,6 +69,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    "/api/app/:path*",
     "/app/:path*",
     "/sign-in",
     "/sign-up",
