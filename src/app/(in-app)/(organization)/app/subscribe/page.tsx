@@ -207,6 +207,7 @@ async function SubscribePage({
             quantity: 1,
           },
         ],
+        allow_promotion_codes: true,
         subscription_data: trialPeriodDays
           ? {
               trial_period_days: trialPeriodDays,
