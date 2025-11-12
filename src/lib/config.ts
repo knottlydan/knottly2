@@ -1,40 +1,36 @@
 import { AppConfigPublic } from "./types";
 
 export const appConfig: AppConfigPublic = {
-  projectName: "Indie Kit",
-  projectSlug: "indie-kit",
+  projectName: "Knottly",
+  projectSlug: "knottly",
   keywords: [
-    "Indie Kit",
-    "NextJS Boilerplate",
-    "NextJS SaaS",
-    "NextJS Starter Kit",
-    "SaaS Boilerplate",
-    "SaaS Starter Kit",
-    "Indie Kit Pro",
+    "Weddin Planner",
+    "Wedding",
+    "Organiser",
   ],
   description:
-    "Indie Kit is a NextJS starter kit for building your own SaaS in hours.",
+    "Knottly is Your personal AI wedding assistant that actually listens – share your dreams, budget, and style in your own words, and watch perfect vendor matches appear.",
   legal: {
     address: {
-      street: "Plot No 337, Workyard, Phase 2, Industrial Business &amp; Park",
-      city: "Chandigarh",
-      state: "Punjab",
-      postalCode: "160002",
-      country: "India",
+      street: "Socio Tower 2",
+      city: "Dubai",
+      state: "Dubai Hills",
+      postalCode: "00000",
+      country: "UAE",
     },
-    email: "ssent.hq@gmail.com",
-    phone: "+91 9876543210",
+    email: "dan@knottly.ai",
+    phone: "+971 58 296 0215",
   },
   social: {
-    twitter: "https://twitter.com/cjsingg",
-    instagram: "https://instagram.com/-",
-    linkedin: "https://linkedin.com/-",
-    facebook: "https://facebook.com/-",
-    youtube: "https://youtube.com/-",
+    twitter: "https://twitter.com/knottlyai",
+    instagram: "https://instagram.com/knottlyai",
+    linkedin: "https://linkedin.com/in/danproc/",
+    facebook: "https://facebook.com/knottlyai",
+    youtube: "https://youtube.com/knottlyai",
   },
   email: {
-    senderName: "Indie Kit",
-    senderEmail: "ssent.hq@gmail.com",
+    senderName: "Knottly",
+    senderEmail: "dan@knottly.ai",
   },
   auth: {
     enablePasswordAuth: false, // Set to true to enable password authentication
